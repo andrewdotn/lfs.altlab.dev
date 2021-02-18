@@ -1,0 +1,26 @@
+version: "3"
+services:
+  app:
+    image: datopian/giftless:0.3.0
+    environment:
+      - GIFTLESS_CONFIG_FILE=giftless.yaml
+    user: "60421:60421"
+    command:
+      # This is the default command, EXCEPT ...
+      - "-s"
+      # we change 127.0.0.1 to 0.0.0.0 so the port is accessible outside the container
+      - "0.0.0.0:5000"
+      - "-M"
+      - "-T"
+      - "--threads"
+      - "2"
+      - "-p"
+      - "2"
+      - "--manage-script-name"
+      - "--callable"
+      - "app"
+    volumes:
+      - "./giftless.yaml:/app/giftless.yaml"
+      - "/data/lfs/storage:/lfs-storage"
+    ports:
+      - 6421:5000
