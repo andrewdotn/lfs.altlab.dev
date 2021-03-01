@@ -15,4 +15,10 @@ services:
       - "./nginx-test.conf:/etc/nginx/conf.d/default.conf"
     ports:
       - "6428:80"
-
+  ssh-server:
+    build: ./ssh-server
+    volumes:
+      - "./id_ssh-user.pub:/home/user/id_ssh-user.pub"
+      - "../git-lfs-authenticate.py:/usr/local/bin/git-lfs-authenticate"
+    ports:
+      - "6422:22"
