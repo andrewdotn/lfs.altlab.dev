@@ -1,0 +1,18 @@
+version: "2"
+services:
+  app:
+    extends:
+      file: "docker-compose.yml"
+      service: "app"
+    environment:
+      - GIFTLESS_DEBUG=1
+    volumes:
+      - "./nginx-test.conf:/etc/nginx/conf.d/default.conf"
+      - "./lfs-test-storage:/lfs-storage"
+  nginx:
+    image: nginx
+    volumes:
+      - "./nginx-test.conf:/etc/nginx/conf.d/default.conf"
+    ports:
+      - "6428:80"
+

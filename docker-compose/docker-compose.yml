@@ -1,4 +1,4 @@
-version: "3"
+version: "2"
 services:
   app:
     image: datopian/giftless:0.3.0
@@ -19,8 +19,9 @@ services:
       - "--manage-script-name"
       - "--callable"
       - "app"
+    restart: always
     volumes:
       - "./giftless.yaml:/app/giftless.yaml"
       - "/data/lfs/storage:/lfs-storage"
     ports:
-      - 6421:5000
+      - "6421:5000"
