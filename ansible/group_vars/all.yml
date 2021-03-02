@@ -1,1 +1,11 @@
 ansible_python_interpreter: /usr/bin/python3
+
+# These users are added to the lfs group automatically; you can also
+# continue to add people using `usermod -aG lfs $user` on the server
+# directly
+lfs_users:
+  - arppe
+  - easantos
+  - hieber
+  - jcpoulin
+  - neitsch

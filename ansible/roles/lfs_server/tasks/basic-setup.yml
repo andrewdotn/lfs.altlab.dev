@@ -21,8 +21,7 @@
     append: true
     groups:
       - lfs
-  loop:
-    - neitsch
+  loop: "{{ lfs_users }}"
 
 - name: git-lfs-authenticate.ini
   template:
