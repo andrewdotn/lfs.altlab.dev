@@ -1,6 +1,6 @@
 version: "2"
 services:
-  app:
+  giftless:
     image: datopian/giftless:0.3.0
     environment:
       - GIFTLESS_CONFIG_FILE=giftless.yaml
@@ -21,7 +21,13 @@ services:
       - "app"
     restart: always
     volumes:
+      # Config file
       - "./giftless.yaml:/app/giftless.yaml"
+      # Our auth plugin
+      - "./token_database.py:/app/giftless/auth/token_database.py"
+      # Database used by auth plugin
+      - "/var/lib/git-lfs-authenticate:/var/lib/git-lfs-authenticate"
+      # Where actual LFS file contents are stored
       - "/data/lfs/storage:/lfs-storage"
     ports:
       - "6421:5000"

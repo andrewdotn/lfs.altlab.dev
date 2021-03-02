@@ -1,0 +1,41 @@
+---
+- name: create /opt/docker-compose
+  file:
+    path: /opt/docker-compose
+    state: directory
+
+- name: create /data directories
+  file:
+    path: "{{ item }}"
+    owner: lfs
+    group: lfs
+    state: directory
+  loop:
+    - /data/lfs
+    - /data/lfs/storage
+
+# These directories and files are owned by root because the user the lfs
+# service runs as should not have permission to configure itself to be a
+# different service
+- name: create /opt/docker-compose dirs
+  file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: 0755
+    state: directory
+  loop:
+    - /opt/docker-compose
+    - /opt/docker-compose/lfs
+
+- name: copy
+  copy:
+    dest: /opt/docker-compose/lfs/{{ item }}
+    src: ../../../../docker-compose/{{ item }}
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - giftless.yaml
+    - token_database.py
+    - docker-compose.yml

@@ -1,0 +1,7 @@
+all:
+  children:
+    lfs_servers:
+      hosts:
+        altlab.dev
+      vars:
+        lfs_hostname: lfs.altlab.dev

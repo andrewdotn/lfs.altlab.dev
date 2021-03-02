@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 pytest = "*"
 black = "==20.8b1"
+ansible = "*"
 
 [dev-packages]
 

@@ -1,0 +1,3 @@
+lfs_uid_gid: 60421
+git_lfs_authenticate_database_directory: /var/lib/git-lfs-authenticate
+git_lfs_authenticate_database_file: "{{ git_lfs_authenticate_database_directory }}/tokens.sqlite3"

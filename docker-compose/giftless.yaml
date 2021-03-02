@@ -4,4 +4,5 @@ TRANSFER_ADAPTERS:
     options:
       storage_class: giftless.storage.local_storage:LocalStorage
 AUTH_PROVIDERS:
-  - giftless.auth.allow_anon:read_write
+  - giftless.auth.token_database:allow_write_if_presenting_token
+  - giftless.auth.allow_anon:read_only

@@ -1,10 +1,11 @@
 # For testing the lfs setup: an ssh server that only accepts logins from a
 # single user
 
-FROM python:3.9-slim
+FROM python:3.8-slim
 RUN apt update && apt install -y openssh-server && rm -rf /var/cache/apt
 RUN mkdir /run/sshd \
-    && useradd --create-home user \
+    && groupadd --gid 60421 git-lfs-authenticate \
+    && useradd --create-home -G git-lfs-authenticate user \
     && mkdir -p /home/user/.ssh \
     && chown user /home/user/.ssh \
     `# due to docker stuff, root sshd in container may need world-read here` \

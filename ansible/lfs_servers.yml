@@ -1,0 +1,6 @@
+- hosts: lfs_servers
+  become: true
+  gather_subset:
+    - min
+  roles:
+    - lfs_server

@@ -1,0 +1,58 @@
+- name: make sure python3.8 exists for git-lfs-authenticate script
+  package:
+    name: python3.8
+
+- name: lfs group
+  group:
+    name: lfs
+    gid: "{{ lfs_uid_gid }}"
+
+- name: lfs user
+  user:
+    name: lfs
+    uid: "{{ lfs_uid_gid }}"
+    group: lfs
+    home: /data/lfs
+    shell: /bin/false
+
+- name: add users to lfs group
+  user:
+    name: "{{ item }}"
+    append: true
+    groups:
+      - lfs
+  loop:
+    - neitsch
+
+- name: git-lfs-authenticate.ini
+  template:
+    src: git-lfs-authenticate.ini.j2
+    dest: /etc/git-lfs-authenticate.ini
+
+- name: create {{ git_lfs_authenticate_database_directory }}
+  file:
+    path: "{{ git_lfs_authenticate_database_directory }}"
+    owner: lfs
+    group: lfs
+    mode: '0770' # group-writable, deny read to others
+    state: directory
+
+- name: create database file if does not exist
+  copy:
+    dest: "{{ git_lfs_authenticate_database_file }}"
+    owner: lfs
+    group: lfs
+    mode: '0660' # group-writable, deny read to others
+
+    # force will prevent this from running if the file already exists
+    # https://stackoverflow.com/questions/28347717/how-to-create-an-empty-file-with-ansible
+    content: ""
+    force: no
+
+- name: copy git-lfs-authenticate.py to /usr/local/bin
+  copy:
+    dest: /usr/local/bin/git-lfs-authenticate
+    src: ../../../../git-lfs-authenticate.py
+    mode: '0750'
+    owner: lfs
+    group: lfs

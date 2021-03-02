@@ -1,14 +1,18 @@
+import os
+import re
 import secrets
 from pathlib import Path
 from shutil import which
-from subprocess import check_call, check_output
+from subprocess import check_call, check_output, CalledProcessError
 from textwrap import dedent
 
 import pytest
 
-
-LFS_PULL_URL = "http://localhost:6428/foo/test2"
-LFS_PUSH_URL = "ssh://localhost:6422/"
+REPO_NAME = "org/lfs-test"
+LFS_PULL_URL = f"http://localhost:6428/{REPO_NAME}"
+SSH_PORT = 6422
+LFS_PUSH_URL = f"ssh://localhost:{SSH_PORT}/{REPO_NAME}"
+ID_SSH_USER = Path(__file__).parent / ".." / "docker-compose" / "id_ssh-user"
 
 
 @pytest.fixture
@@ -32,6 +36,16 @@ def check_setup():
         raise Exception(
             "git-lfs command not found, these tests will not work without it"
         )
+
+    if not ID_SSH_USER.is_file():
+        raise Exception(
+            f"{ID_SSH_USER} does not exist, run `make id_ssh-user` to create"
+        )
+
+    # The next bit is *required* on linux, but *breaks everything* on
+    # docker-for-mac
+    if os.uname().sysname == 'Darwin':
+        return
 
     test_storage_dir = (
         Path(__file__).parent / ".." / "docker-compose" / "lfs-test-storage"
@@ -66,7 +80,25 @@ def create_git_lfs_repo(path, foo_contents="foo"):
     check_call(["git", "commit", "-m", "add foo"], cwd=path)
 
 
-def create_and_push(clone_dir, origin_dir):
+def env_with_git_ssh_user(username):
+    env = dict(os.environ)
+    env["GIT_SSH_COMMAND"] = re.sub(
+        r"\s+",
+        " ",
+        f"""
+        ssh
+            -o StrictHostKeyChecking=no
+            -o UserKnownHostsFile=/dev/null
+            -o BatchMode=yes
+            -p {SSH_PORT}
+            -i {os.fspath(ID_SSH_USER)}
+            -l {username}
+        """,
+    )
+    return env
+
+
+def create_and_push(clone_dir, origin_dir, username):
     assert clone_dir != origin_dir
 
     foo_contents = "big binary file " + secrets.token_hex(20)
@@ -76,13 +108,13 @@ def create_and_push(clone_dir, origin_dir):
     create_git_lfs_repo(clone_dir, foo_contents=foo_contents)
 
     check_call(["git", "remote", "add", "origin", origin_dir], cwd=clone_dir)
-    check_call(["git", "push"], cwd=clone_dir)
+    check_call(["git", "push"], cwd=clone_dir, env=env_with_git_ssh_user(username))
 
     return foo_contents
 
 
 def test_authorized_user_can_commit(clone_dir, origin_dir):
-    foo_contents = create_and_push(clone_dir, origin_dir)
+    foo_contents = create_and_push(clone_dir, origin_dir, "user")
 
     # The upstream repo should contain a pointer to the contents, not the
     # contents themselves.
@@ -92,13 +124,15 @@ def test_authorized_user_can_commit(clone_dir, origin_dir):
     assert b"version https://git-lfs.github.com/spec" in foo_blob
 
 
-def test_anon_users_cannot_push(clone_dir, new_clone_dir):
-    with pytest.raises(Exception, match="unauthorized"):
-        create_and_push(clone_dir, new_clone_dir)
+def test_anon_users_cannot_push(clone_dir, new_clone_dir, capfd):
+    with pytest.raises(CalledProcessError, match="'git', 'push'"):
+        create_and_push(clone_dir, new_clone_dir, "unauthorized")
+    captured = capfd.readouterr()
+    assert "Permission denied" in captured.err
 
 
 def test_anon_users_can_pull(clone_dir, origin_dir, new_clone_dir):
-    foo_contents = create_and_push(clone_dir, origin_dir)
+    foo_contents = create_and_push(clone_dir, origin_dir, "user")
 
     check_call(["git", "clone", origin_dir, "new"], cwd=new_clone_dir)
 
