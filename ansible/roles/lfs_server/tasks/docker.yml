@@ -39,3 +39,20 @@
     - giftless.yaml
     - token_database.py
     - docker-compose.yml
+
+- name: create service file
+  template:
+    dest: /etc/systemd/system/docker-compose-lfs.service
+    src: docker-compose-lfs.service.j2
+
+# If this was a normal service where restart and so on actually worked,
+# we’d set up handlers to restart the service if the config file changed.
+
+- name: validate service file
+  command: systemd-analyze verify /etc/systemd/system/docker-compose-lfs.service
+
+- name: enable docker-compose-lfs
+  systemd:
+    name: docker-compose-lfs.service
+    state: started
+    enabled: yes
