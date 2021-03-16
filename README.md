@@ -49,6 +49,15 @@ Assumptions:
   - Nothing secret is stored in LFS itself, only files that would go into a
     public git repository if they weren’t too large to do that comfortably.
 
+    <details>
+    Since you get stuff from LFS by asking for it by SHA, in theory you may
+    be able to store private objects for private repos in there—in order to
+    read anything useful from LFS, you’d first need to have access to the
+    private repo to get the object hash—but in the current configuration I
+    am 90% sure that there is an API endpoint to enumerate all the objects
+    in the LFS repo without knowing their hashes <i>a priori</i>.
+    </details>
+
   - There is a server to which everyone who should be able to commit has
     SSH access.
 
