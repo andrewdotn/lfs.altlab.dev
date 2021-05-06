@@ -35,10 +35,53 @@ What this repo *does not contain* but which is also important:
     ansible here because of the extra work that would be required to
     integrate with certbot.
 
-    Note that the `server{ }` block should contain a value for max body
-    size, e.g., `client_max_body_size 1G;`, or you will get `413 – Request
-    Entity Too Large` errors when trying to push large objects larger than
-    the default of one mebibyte.
+    But here is a good starting point for that:
+
+        location / {
+            uwsgi_pass localhost:6421;
+            include uwsgi_params;
+            client_body_temp_path /data/lfs/temp; # should be owned by www-data:root
+            uwsgi_buffering off; # otherwise running a bunch of pulls at once
+                                 # crashes them all
+            gzip off; # otherwise pulls cause nginx to use 100% CPU
+        }
+
+        client_max_body_size 2G; # Otherwise get 413 - Request Entity Too Large
+
+### Issues
+
+*Pushing larger (100MB+) files currently doesn’t work well.* Yes, that is
+kind of the point of git-lfs, but pulls are much more common than pushes,
+so we make do for now.
+
+  - If the file takes longer than 1 minute to upload, a security token
+    expires before the upload finishes
+  - Instead of printing an error message when that happens, `git-lfs` just
+    retries 8 times by default :(
+  - Even if the upload itself runs quickly, the lfs server takes so long to
+    deal with it that it doesn’t seem to finish on our production server?
+    git-lfs on the *client* side is likely to drop the connection after 1
+    minute instead of waiting around—you will see an nginx 499 status code
+    in the logs. You should be able to work around this by bumping the
+    client timeout, i.e., `git config lfs.activitytimeout 3600`, but I
+    still couldn’t get pushes of gigabyte-plus files to work.
+
+Workaround:
+
+ 1. Get the SHA256 of the big file with issues:
+
+        openssl dgst -sha256 my-big-file
+
+ 2. rsync it to somewhere in `/data` on lfs.altlab.dev. You’re likely to
+    fill up the disk if you try to put it in your home directory, so be
+    careful!
+
+ 3. Move the file into place:
+
+        sudo mv my-big-file /data/storage/lfs/$org/$repo/$sha256 \
+            && sudo chown lfs:lfs /data/storage/lfs/$org/$repo/$sha256
+
+ 4. Script the above process if you do it more than once or twice.
 
 ## Permissions
 

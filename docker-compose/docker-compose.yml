@@ -6,16 +6,22 @@ services:
       - GIFTLESS_CONFIG_FILE=giftless.yaml
     user: "60421:60421"
     command:
-      # This is the default command, EXCEPT ...
-      - "-s"
+      - "--strict"
       # we change 127.0.0.1 to 0.0.0.0 so the port is accessible outside the container
+      - "--uwsgi-socket"
       - "0.0.0.0:5000"
-      - "-M"
-      - "-T"
+      # the stats port is not currently exposed outside the container
+      - "--stats"
+      - "127.0.0.1:9191"
+      - "--master"
+      - "--enable-threads"
       - "--threads"
+      - "8"
+      - "--processes"
       - "2"
-      - "-p"
-      - "2"
+      - "--post-buffering"
+      - "1"
+      - "--die-on-term"
       - "--manage-script-name"
       - "--callable"
       - "app"

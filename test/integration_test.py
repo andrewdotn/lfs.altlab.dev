@@ -44,7 +44,7 @@ def check_setup():
 
     # The next bit is *required* on linux, but *breaks everything* on
     # docker-for-mac
-    if os.uname().sysname == 'Darwin':
+    if os.uname().sysname == "Darwin":
         return
 
     test_storage_dir = (
@@ -59,6 +59,8 @@ def check_setup():
 
 def create_git_lfs_repo(path, foo_contents="foo"):
     check_call(["git", "init"], cwd=path)
+    check_call(["git", "config", "lfs.ssh.retries", "1"], cwd=path)
+    check_call(["git", "config", "lfs.transfer.maxretries", "1"], cwd=path)
 
     check_call(["git", "lfs", "install"], cwd=path)
     (path / ".lfsconfig").write_text(
@@ -73,7 +75,6 @@ def create_git_lfs_repo(path, foo_contents="foo"):
     check_call(["git", "add", ".lfsconfig"], cwd=path)
 
     (path / "foo").write_text(foo_contents)
-    check_call(["git", "add", "foo"], cwd=path)
     check_call(["git", "lfs", "track", "foo"], cwd=path)
     check_call(["git", "add", "foo", ".gitattributes"], cwd=path)
 
@@ -134,6 +135,9 @@ def test_anon_users_cannot_push(clone_dir, new_clone_dir, capfd):
 def test_anon_users_can_pull(clone_dir, origin_dir, new_clone_dir):
     foo_contents = create_and_push(clone_dir, origin_dir, "user")
 
-    check_call(["git", "clone", origin_dir, "new"], cwd=new_clone_dir)
+    check_call(
+        ["git", "clone", "-c", "lfs.transfer.maxretries=1", origin_dir, "new"],
+        cwd=new_clone_dir,
+    )
 
     assert foo_contents in (new_clone_dir / "new" / "foo").read_text()
