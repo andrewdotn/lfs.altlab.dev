@@ -21,8 +21,7 @@
 
         cd ../sites-enabled/
         sudo ln -s ../sites-available/lfs.altlab.dev .
-        sudo nginx -t
-        sudo systemctl restart
+        sudo nginx -t && sudo sudo systemctl reload nginx
         sudo certbot
         # choose the new domain name
         # choose “No redirect” because we already have one in the file
